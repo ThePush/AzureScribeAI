@@ -6,10 +6,7 @@ import {
     AzureKeyCredential,
     ChatRequestMessage,
 } from "@azure/openai";
-import * as dotenv from "dotenv";
 
-let endpoint: string | undefined;
-let deploymentId: string | undefined;
 let openai: OpenAIClient | undefined = undefined;
 let commentId = 1;
 
@@ -35,30 +32,31 @@ function getApiKey(): string | undefined {
         | undefined;
 }
 
+function getEndpoint(): string | undefined {
+    return vscode.workspace.getConfiguration("scribeai").get("endpoint") as
+        | string
+        | undefined;
+}
+
+function getDeploymentId(): string | undefined {
+    return vscode.workspace.getConfiguration("scribeai").get("deploymentId") as
+        | string
+        | undefined;
+}
+
 /**
  * Shows an input box for getting API key using window.showInputBox().
  * Checks if inputted API Key is valid.
  * Updates the User Settings API Key with the newly inputted API Key.
  */
-export async function showInputBox() {
+export async function showInputBoxForApiKey() {
     const result = await vscode.window.showInputBox({
         ignoreFocusOut: true,
         placeHolder: "Your OpenAI API Key",
         title: "Scribe AI",
         prompt: "You have not set your OpenAI API key yet or your API key is incorrect, please enter your API key to use the ScribeAI extension.",
-        validateInput: async (text) => {
-            vscode.window.showInformationMessage(`Validating: ${text}`);
-            if (text === "") {
-                return "The API Key can not be empty";
-            }
-            const isValid = await createAzureOpenAIClient(text);
-            if (!isValid) {
-                return "Your API key is invalid";
-            }
-            return null;
-        },
     });
-    vscode.window.showInformationMessage(`Got: ${result}`);
+    vscode.window.showInformationMessage(`Got API key: ${result}`);
     // Write to user settings
     await vscode.workspace
         .getConfiguration("scribeai")
@@ -68,13 +66,51 @@ export async function showInputBox() {
     return result;
 }
 
-async function createAzureOpenAIClient(apikey?: string) {
+async function showInputBoxForEndpoint() {
+    const endpoint = await vscode.window.showInputBox({
+        ignoreFocusOut: true,
+        placeHolder: "Enter your Azure OpenAI endpoint",
+        title: "Azure OpenAI Endpoint",
+        prompt: "Please enter your Azure OpenAI endpoint.",
+    });
+    vscode.window.showInformationMessage(`Got endpoint: ${endpoint}`);
+    await vscode.workspace
+        .getConfiguration("scribeai")
+        .update("endpoint", endpoint, true);
+    return endpoint;
+}
+
+async function showInputBoxForDeploymentId() {
+    const deploymentId = await vscode.window.showInputBox({
+        ignoreFocusOut: true,
+        placeHolder: "Enter your Azure OpenAI Deployment ID",
+        title: "Azure OpenAI Deployment ID",
+        prompt: "Please enter your Azure OpenAI Deployment ID.",
+    });
+    vscode.window.showInformationMessage(`Got deploymentId: ${deploymentId}`);
+    await vscode.workspace
+        .getConfiguration("scribeai")
+        .update("deploymentId", deploymentId, true);
+    return deploymentId;
+}
+
+async function createAzureOpenAIClient() {
+    if (!getApiKey()) {
+        await showInputBoxForApiKey();
+    }
+    if (!getEndpoint()) {
+        await showInputBoxForEndpoint();
+    }
+    if (!getDeploymentId()) {
+        await showInputBoxForDeploymentId();
+    }
+
     try {
         openai = new OpenAIClient(
-            endpoint!,
-            new AzureKeyCredential(apikey ? apikey : getApiKey()!)
+            getEndpoint()!,
+            new AzureKeyCredential(getApiKey()!)
         );
-        await openai.getChatCompletions(deploymentId!, [
+        await openai.getChatCompletions(getDeploymentId()!, [
             {
                 role: "user",
                 content: "I want to book a flight to Varanasi.",
@@ -87,15 +123,7 @@ async function createAzureOpenAIClient(apikey?: string) {
 }
 
 export async function activate(context: vscode.ExtensionContext) {
-    dotenv.config({ path: context.asAbsolutePath(".env") });
-    endpoint = process.env.OPENAI_ENDPOINT;
-    deploymentId = process.env.DEPLOYMENT_ID;
-    console.log(endpoint);
-    console.log(deploymentId);
-    // Workspace settings override User settings when getting the setting.
-    if (!getApiKey() || !(await createAzureOpenAIClient())) {
-        await showInputBox();
-    }
+    await createAzureOpenAIClient();
 
     // A `CommentController` is able to provide comments for documents.
     const commentController = vscode.comments.createCommentController(
@@ -470,10 +498,9 @@ export async function activate(context: vscode.ExtensionContext) {
         // If openai is not initialized initialize it with existing API Key
         // or if doesn't exist then ask user to input API Key.
         if (openai === undefined) {
-            if (!getApiKey()) {
-                const apiKey = await showInputBox();
-            }
+            await createAzureOpenAIClient();
         }
+
         if (model === "ChatGPT" || model === "gpt-4") {
             const options = {
                 temperature: 0,
@@ -483,7 +510,7 @@ export async function activate(context: vscode.ExtensionContext) {
                 presencePenalty: 1,
             };
             const response = await openai!.getChatCompletions(
-                deploymentId!,
+                getDeploymentId()!,
                 chatGPTPrompt,
                 options
             );
@@ -514,7 +541,7 @@ export async function activate(context: vscode.ExtensionContext) {
                 stop: ["Human:"], // V1: "Human:"
             };
             const response = await openai!.getChatCompletions(
-                deploymentId!,
+                getDeploymentId()!,
                 chatGPTPrompt,
                 options
             );
@@ -569,9 +596,7 @@ export async function activate(context: vscode.ExtensionContext) {
         // If openai is not initialized initialize it with existing API Key
         // or if doesn't exist then ask user to input API Key.
         if (openai === undefined) {
-            if (!getApiKey()) {
-                const apiKey = await showInputBox();
-            }
+            await createAzureOpenAIClient();
         }
 
         const options = {
@@ -582,7 +607,7 @@ export async function activate(context: vscode.ExtensionContext) {
             presencePenalty: 1,
         };
         const response = await openai!.getChatCompletions(
-            deploymentId!,
+            getDeploymentId()!,
             prompt,
             options
         );
