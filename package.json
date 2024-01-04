@@ -2,7 +2,7 @@
     "name": "azurescribeai",
     "displayName": "ChatGPT & GPT extension - AzureScribeAI",
     "description": "🚀 Use ChatGPT & GPT right inside VSCode to enhance and automate your coding with AI-powered assistance",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "publisher": "JeremySemel",
     "private": true,
     "icon": "resources/chatbot.png",
