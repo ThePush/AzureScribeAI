@@ -14,9 +14,6 @@
     "engines": {
         "vscode": "^1.65.0"
     },
-    "sponsor": {
-        "url": "https://ko-fi.com/pixelperfectlabs"
-    },
     "categories": [
         "Programming Languages",
         "Snippets",
@@ -239,16 +236,21 @@
         }
     },
     "scripts": {
-        "vscode:prepublish": "npm run compile",
         "compile": "tsc -p ./",
         "watch": "tsc -watch -p ./",
-        "lint": "eslint \"src/**/*.ts\""
+        "lint": "eslint \"src/**/*.ts\"",
+        "vscode:prepublish": "npm run esbuild-base -- --minify",
+        "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node",
+        "esbuild": "npm run esbuild-base -- --sourcemap",
+        "esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
+        "test-compile": "tsc -p ./"
     },
     "devDependencies": {
         "@types/node": "^16.18.33",
         "@types/vscode": "~1.65.0",
         "@typescript-eslint/eslint-plugin": "^5.59.7",
         "@typescript-eslint/parser": "^5.59.7",
+        "esbuild": "^0.19.11",
         "eslint": "^8.41.0",
         "typescript": "^4.9.5"
     },

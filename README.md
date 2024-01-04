@@ -9,7 +9,7 @@ This project is a simple fork of <a href="https://github.com/ajikan/ScribeAI">Sc
 </p>
 
 <h4 align="center">
-  <a href="https://marketplace.visualstudio.com/items?itemName=AndrewZhang.scribeai">🔗 VSCode Marketplace</a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=JeremySemel.azurescribeai">🔗 VSCode Marketplace</a>
 </h4>
 
 &nbsp;
@@ -32,7 +32,7 @@ This project is a simple fork of <a href="https://github.com/ajikan/ScribeAI">Sc
 - Once installation is complete, go to settings and search for `AzureScribeAI` to add your Azure OpenAI API key, endpoint and deployment name. When you install and use Azure ScribeAI for the first time, it will ask you for your Azure OpenAI API key, endpoint and deployment name.
 
 ## ⚙️ Settings
-- You can also change your API key, endpoint and deployment name in User Settings via `Code` -> `Preferences` -> `Settings` and under `Extensions` you will find `AzureScribeAI` settings. Or you can just search `AzureScribeAI` in search box.
+- You can change your API key, endpoint and deployment name in User Settings via `Code` -> `Preferences` -> `Settings` and under `Extensions` you will find `AzureScribeAI` settings. Or you can just search `AzureScribeAI` in search box.
 <p align="center">
   <img src="./userSettings.png" />
 </p>
