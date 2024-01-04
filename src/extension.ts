@@ -96,13 +96,13 @@ async function showInputBoxForDeploymentId() {
 }
 
 async function createAzureOpenAIClient() {
-    if (!getApiKey()) {
+    if (getApiKey() === undefined || getApiKey() === "") {
         await showInputBoxForApiKey();
     }
-    if (!getEndpoint()) {
+    if (getEndpoint() === undefined || getEndpoint() === "") {
         await showInputBoxForEndpoint();
     }
-    if (!getDeploymentId()) {
+    if (getDeploymentId() === undefined || getDeploymentId() === "") {
         await showInputBoxForDeploymentId();
     }
 
@@ -121,10 +121,13 @@ async function createAzureOpenAIClient() {
         vscode.window.showErrorMessage(
             "Error: " +
                 err +
-                "\nPlease check your API Key, Endpoint, and Deployment Name in your settings."
+                "\n\nPlease check your API Key, Endpoint, and Deployment Name in your settings."
         );
         return false;
     }
+    vscode.window.showInformationMessage(
+        "Azure Scribe AI: Successfully connected to Azure OpenAI API."
+    );
     return true;
 }
 
