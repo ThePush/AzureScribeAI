@@ -19,7 +19,8 @@
         "Snippets",
         "Other",
         "Machine Learning",
-        "Notebooks"
+        "Notebooks",
+        "Azure"
     ],
     "keywords": [
         "chatgpt",
@@ -34,7 +35,8 @@
         "completion",
         "javascript",
         "typescript",
-        "web development"
+        "web development",
+        "azure"
     ],
     "galleryBanner": {
         "color": "#041621",
