@@ -119,7 +119,7 @@ async function createAzureOpenAIClient() {
         ]);
     } catch (err) {
         vscode.window.showErrorMessage(
-            "Error: " +
+            "Azure Scribe AI: Error: " +
                 err +
                 "\n\nPlease check your API Key, Endpoint, and Deployment Name in your settings."
         );
@@ -471,6 +471,41 @@ export async function activate(context: vscode.ExtensionContext) {
         return document.getText(thread.range).trim();
     }
 
+    async function getOpenAIResponse(prompt: ChatRequestMessage[]) {
+        if (openai === undefined) {
+            await createAzureOpenAIClient();
+            if (openai === undefined) {
+                vscode.window.showErrorMessage("Azure Scribe AI: OpenAI client creation failed");
+                return null;
+            }
+        }
+
+        const options = {
+            temperature: 0,
+            maxTokens: 500,
+            topP: 1.0,
+            frequencyPenalty: 1,
+            presencePenalty: 1,
+        };
+
+        try {
+            const response = await openai!.getChatCompletions(
+                getDeploymentId()!,
+                prompt,
+                options
+            );
+            return (
+                response.choices[0].message?.content ||
+                "Azure Scribe AI: An error occurred. Please try again..."
+            );
+        } catch (err) {
+            vscode.window.showErrorMessage(
+                "Error sending request to OpenAI: " + err
+            );
+            return null;
+        }
+    }
+
     /**
      * User replies with a question.
      * The question + conversation history + code block then gets used
@@ -481,16 +516,8 @@ export async function activate(context: vscode.ExtensionContext) {
     async function askAI(reply: vscode.CommentReply) {
         const question = reply.text.trim();
         const thread = reply.thread;
-        const model =
-            vscode.workspace.getConfiguration("azurescribeai").get("models") +
-            "";
-        let prompt = "";
         let chatGPTPrompt: ChatRequestMessage[] = [];
-        if (model === "ChatGPT" || model === "gpt-4") {
-            chatGPTPrompt = await generatePromptChatGPT(question, thread);
-        } else {
-            prompt = await generatePromptV1(question, thread);
-        }
+        chatGPTPrompt = await generatePromptChatGPT(question, thread);
         const humanComment = new NoteComment(
             new vscode.MarkdownString(question),
             vscode.CommentMode.Preview,
@@ -505,72 +532,20 @@ export async function activate(context: vscode.ExtensionContext) {
         );
         thread.comments = [...thread.comments, humanComment];
 
-        if (openai === undefined) {
-            await createAzureOpenAIClient();
-        }
-
-        if (model === "ChatGPT" || model === "gpt-4") {
-            const options = {
-                temperature: 0,
-                maxTokens: 1000,
-                topP: 1.0,
-                frequencyPenalty: 1,
-                presencePenalty: 1,
-            };
-            const response = await openai!.getChatCompletions(
-                getDeploymentId()!,
-                chatGPTPrompt,
-                options
-            );
-
-            const responseText = response.choices[0].message?.content
-                ? response.choices[0].message?.content
-                : "An error occured. Please try again...";
-            const AIComment = new NoteComment(
-                new vscode.MarkdownString(responseText.trim()),
-                vscode.CommentMode.Preview,
-                {
-                    name: "Azure Scribe AI",
-                    iconPath: vscode.Uri.parse(
-                        "https://img.icons8.com/fluency/96/null/chatbot.png"
-                    ),
-                },
-                thread,
-                thread.comments.length ? "canDelete" : undefined
-            );
-            thread.comments = [...thread.comments, AIComment];
-        } else {
-            const options = {
-                temperature: 0,
-                maxTokens: 500,
-                topP: 1.0,
-                frequencyPenalty: 1,
-                presencePenalty: 1,
-                stop: ["Human:"], // V1: "Human:"
-            };
-            const response = await openai!.getChatCompletions(
-                getDeploymentId()!,
-                chatGPTPrompt,
-                options
-            );
-
-            const responseText = response.choices[0].message?.content
-                ? response.choices[0].message?.content
-                : "An error occured. Please try again...";
-            const AIComment = new NoteComment(
-                new vscode.MarkdownString(responseText.trim()),
-                vscode.CommentMode.Preview,
-                {
-                    name: "Azure Scribe AI",
-                    iconPath: vscode.Uri.parse(
-                        "https://img.icons8.com/fluency/96/null/chatbot.png"
-                    ),
-                },
-                thread,
-                thread.comments.length ? "canDelete" : undefined
-            );
-            thread.comments = [...thread.comments, AIComment];
-        }
+        const responseText = await getOpenAIResponse(chatGPTPrompt);
+        const AIComment = new NoteComment(
+            new vscode.MarkdownString(responseText!.trim()),
+            vscode.CommentMode.Preview,
+            {
+                name: "Azure Scribe AI",
+                iconPath: vscode.Uri.parse(
+                    "https://img.icons8.com/fluency/96/null/chatbot.png"
+                ),
+            },
+            thread,
+            thread.comments.length ? "canDelete" : undefined
+        );
+        thread.comments = [...thread.comments, AIComment];
     }
 
     /**
@@ -601,26 +576,7 @@ export async function activate(context: vscode.ExtensionContext) {
         prompt.push(instruction);
         prompt.push(code);
 
-        if (openai === undefined) {
-            await createAzureOpenAIClient();
-        }
-
-        const options = {
-            temperature: 0,
-            maxTokens: 1000,
-            topP: 1.0,
-            frequencyPenalty: 1,
-            presencePenalty: 1,
-        };
-        const response = await openai!.getChatCompletions(
-            getDeploymentId()!,
-            prompt,
-            options
-        );
-
-        const responseText = response.choices[0].message?.content
-            ? response.choices[0].message?.content
-            : "An error occured. Please try again...";
+        const responseText = getOpenAIResponse(prompt);
 
         if (responseText) {
             const editor = await vscode.window.showTextDocument(thread.uri);
@@ -632,7 +588,7 @@ export async function activate(context: vscode.ExtensionContext) {
             });
         } else {
             vscode.window.showErrorMessage(
-                "An error occured. Please try again..."
+                "Azure Scribe AI: An error occured. Please try again..."
             );
         }
     }
