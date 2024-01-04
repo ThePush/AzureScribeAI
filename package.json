@@ -1,15 +1,15 @@
 {
-    "name": "scribeai",
-    "displayName": "ChatGPT & GPT extension - ScribeAI",
+    "name": "azurescribeai",
+    "displayName": "ChatGPT & GPT extension - AzureScribeAI",
     "description": "🚀 Use ChatGPT & GPT right inside VSCode to enhance and automate your coding with AI-powered assistance",
-    "version": "1.2.1",
-    "publisher": "AndrewZhang",
+    "version": "2.0.0",
+    "publisher": "JeremySemel",
     "private": true,
     "icon": "resources/chatbot.png",
     "license": "Apache-2.0",
     "repository": {
         "type": "git",
-        "url": "https://github.com/ajikan/ScribeAI"
+        "url": "https://github.com/ThePush/AzureScribeAI"
     },
     "engines": {
         "vscode": "^1.65.0"
@@ -146,81 +146,81 @@
                 {
                     "command": "mywiki.deleteNote",
                     "group": "navigation",
-                    "when": "commentController == comment-scribeai && !commentThreadIsEmpty"
+                    "when": "commentController == comment-azurescribeai && !commentThreadIsEmpty"
                 }
             ],
             "comments/commentThread/context": [
                 {
                     "command": "mywiki.createNote",
                     "group": "inline@5",
-                    "when": "commentController == comment-scribeai && commentThreadIsEmpty"
+                    "when": "commentController == comment-azurescribeai && commentThreadIsEmpty"
                 },
                 {
                     "command": "mywiki.replyNote",
                     "group": "inline@4",
-                    "when": "commentController == comment-scribeai && !commentThreadIsEmpty"
+                    "when": "commentController == comment-azurescribeai && !commentThreadIsEmpty"
                 },
                 {
                     "command": "mywiki.askAI",
                     "group": "inline@1",
-                    "when": "commentController == comment-scribeai"
+                    "when": "commentController == comment-azurescribeai"
                 },
                 {
                     "command": "mywiki.aiEdit",
                     "group": "inline@2",
-                    "when": "commentController == comment-scribeai"
+                    "when": "commentController == comment-azurescribeai"
                 },
                 {
                     "command": "mywiki.genDocString",
                     "group": "inline@3",
-                    "when": "commentController == comment-scribeai"
+                    "when": "commentController == comment-azurescribeai"
                 }
             ],
             "comments/comment/title": [
                 {
                     "command": "mywiki.editNote",
                     "group": "group@1",
-                    "when": "commentController == comment-scribeai"
+                    "when": "commentController == comment-azurescribeai"
                 },
                 {
                     "command": "mywiki.deleteNoteComment",
                     "group": "group@2",
-                    "when": "commentController == comment-scribeai && comment == canDelete"
+                    "when": "commentController == comment-azurescribeai && comment == canDelete"
                 }
             ],
             "comments/comment/context": [
                 {
                     "command": "mywiki.cancelsaveNote",
                     "group": "inline@1",
-                    "when": "commentController == comment-scribeai"
+                    "when": "commentController == comment-azurescribeai"
                 },
                 {
                     "command": "mywiki.saveNote",
                     "group": "inline@2",
-                    "when": "commentController == comment-scribeai"
+                    "when": "commentController == comment-azurescribeai"
                 }
             ]
         },
         "configuration": {
-            "title": "ScribeAI",
+            "title": "AzureScribeAI",
             "properties": {
-                "scribeai.ApiKey": {
+                "azurescribeai.ApiKey": {
                     "type": "string",
                     "default": "",
                     "scope": "application",
                     "markdownDescription": "Your personal OpenAI API key. If you don't have one, generate a new one [here](https://beta.openai.com/account/api-keys).\n\nDon't forget to [restart your extension](command:workbench.action.reloadWindow) once you finished configuring so that your extension gets loaded with the new configurations."
                 },
-                "scribeai.endpoint": {
+                "azurescribeai.endpoint": {
                     "type": "string",
                     "default": "",
                     "description": "Your Azure OpenAI endpoint"
                 },
-                "scribeai.deploymentId": {
+                "azurescribeai.deploymentName": {
                     "type": "string",
                     "default": "",
-                    "description": "Your Azure OpenAI Deployment ID"
+                    "description": "Your Azure OpenAI Deployment Name"
                 },
-                "scribeai.models": {
+                "azurescribeai.models": {
                     "type": "string",
                     "default": "ChatGPT",
                     "enum": [

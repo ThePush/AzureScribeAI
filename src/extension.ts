@@ -27,42 +27,41 @@ class NoteComment implements vscode.Comment {
 }
 
 function getApiKey(): string | undefined {
-    return vscode.workspace.getConfiguration("scribeai").get("ApiKey") as
+    return vscode.workspace.getConfiguration("azurescribeai").get("ApiKey") as
         | string
         | undefined;
 }
 
 function getEndpoint(): string | undefined {
-    return vscode.workspace.getConfiguration("scribeai").get("endpoint") as
-        | string
-        | undefined;
+    return vscode.workspace
+        .getConfiguration("azurescribeai")
+        .get("endpoint") as string | undefined;
 }
 
 function getDeploymentId(): string | undefined {
-    return vscode.workspace.getConfiguration("scribeai").get("deploymentId") as
-        | string
-        | undefined;
+    return vscode.workspace
+        .getConfiguration("azurescribeai")
+        .get("deploymentName") as string | undefined;
 }
 
 /**
  * Shows an input box for getting API key using window.showInputBox().
- * Checks if inputted API Key is valid.
  * Updates the User Settings API Key with the newly inputted API Key.
  */
 export async function showInputBoxForApiKey() {
     const result = await vscode.window.showInputBox({
         ignoreFocusOut: true,
-        placeHolder: "Your OpenAI API Key",
-        title: "Scribe AI",
-        prompt: "You have not set your OpenAI API key yet or your API key is incorrect, please enter your API key to use the ScribeAI extension.",
+        placeHolder: "Your Azure OpenAI API Key",
+        title: "Azure OpenAI API Key",
+        prompt: "Please enter your Azure OpenAI API key.",
     });
     vscode.window.showInformationMessage(`Got API key: ${result}`);
     // Write to user settings
     await vscode.workspace
-        .getConfiguration("scribeai")
+        .getConfiguration("azurescribeai")
         .update("ApiKey", result, true);
     // Write to workspace settings
-    //await vscode.workspace.getConfiguration('scribeai').update('ApiKey', result, false);
+    //await vscode.workspace.getConfiguration('azurescribeai').update('ApiKey', result, false);
     return result;
 }
 
@@ -75,7 +74,7 @@ async function showInputBoxForEndpoint() {
     });
     vscode.window.showInformationMessage(`Got endpoint: ${endpoint}`);
     await vscode.workspace
-        .getConfiguration("scribeai")
+        .getConfiguration("azurescribeai")
         .update("endpoint", endpoint, true);
     return endpoint;
 }
@@ -83,14 +82,16 @@ async function showInputBoxForEndpoint() {
 async function showInputBoxForDeploymentId() {
     const deploymentId = await vscode.window.showInputBox({
         ignoreFocusOut: true,
-        placeHolder: "Enter your Azure OpenAI Deployment ID",
-        title: "Azure OpenAI Deployment ID",
-        prompt: "Please enter your Azure OpenAI Deployment ID.",
+        placeHolder: "Enter your Azure OpenAI Deployment name",
+        title: "Azure OpenAI Deployment name",
+        prompt: "Please enter your Azure OpenAI Deployment name.",
     });
-    vscode.window.showInformationMessage(`Got deploymentId: ${deploymentId}`);
+    vscode.window.showInformationMessage(
+        `Got deployment name: ${deploymentId}`
+    );
     await vscode.workspace
-        .getConfiguration("scribeai")
-        .update("deploymentId", deploymentId, true);
+        .getConfiguration("azurescribeai")
+        .update("deploymentName", deploymentId, true);
     return deploymentId;
 }
 
@@ -117,6 +118,11 @@ async function createAzureOpenAIClient() {
             },
         ]);
     } catch (err) {
+        vscode.window.showErrorMessage(
+            "Error: " +
+                err +
+                "\nPlease check your API Key, Endpoint, and Deployment Name in your settings."
+        );
         return false;
     }
     return true;
@@ -127,8 +133,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // A `CommentController` is able to provide comments for documents.
     const commentController = vscode.comments.createCommentController(
-        "comment-scribeai",
-        "ScribeAI Comment Controller"
+        "comment-azurescribeai",
+        "Azure ScribeAI Comment Controller"
     );
     context.subscriptions.push(commentController);
 
@@ -144,7 +150,7 @@ export async function activate(context: vscode.ExtensionContext) {
     };
 
     commentController.options = {
-        prompt: "Ask Scribe AI...",
+        prompt: "Ask Azure Scribe AI...",
         placeHolder:
             'Ask me anything! Example: "Explain the above code in plain English"',
     };
@@ -352,7 +358,7 @@ export async function activate(context: vscode.ExtensionContext) {
                 conversation += `Human: ${
                     (filteredComments[i].body as vscode.MarkdownString).value
                 }\n\n`;
-            } else if (filteredComments[i].author.name === "Scribe AI") {
+            } else if (filteredComments[i].author.name === "Azure Scribe AI") {
                 conversation += `AI: ${
                     (filteredComments[i].body as vscode.MarkdownString).value
                 }\n\n`;
@@ -410,7 +416,7 @@ export async function activate(context: vscode.ExtensionContext) {
                             .value
                     }`,
                 });
-            } else if (filteredComments[i].author.name === "Scribe AI") {
+            } else if (filteredComments[i].author.name === "Azure Scribe AI") {
                 messages.push({
                     role: "assistant",
                     content: `${
@@ -473,7 +479,8 @@ export async function activate(context: vscode.ExtensionContext) {
         const question = reply.text.trim();
         const thread = reply.thread;
         const model =
-            vscode.workspace.getConfiguration("scribeai").get("models") + "";
+            vscode.workspace.getConfiguration("azurescribeai").get("models") +
+            "";
         let prompt = "";
         let chatGPTPrompt: ChatRequestMessage[] = [];
         if (model === "ChatGPT" || model === "gpt-4") {
@@ -495,8 +502,6 @@ export async function activate(context: vscode.ExtensionContext) {
         );
         thread.comments = [...thread.comments, humanComment];
 
-        // If openai is not initialized initialize it with existing API Key
-        // or if doesn't exist then ask user to input API Key.
         if (openai === undefined) {
             await createAzureOpenAIClient();
         }
@@ -522,7 +527,7 @@ export async function activate(context: vscode.ExtensionContext) {
                 new vscode.MarkdownString(responseText.trim()),
                 vscode.CommentMode.Preview,
                 {
-                    name: "Scribe AI",
+                    name: "Azure Scribe AI",
                     iconPath: vscode.Uri.parse(
                         "https://img.icons8.com/fluency/96/null/chatbot.png"
                     ),
@@ -553,7 +558,7 @@ export async function activate(context: vscode.ExtensionContext) {
                 new vscode.MarkdownString(responseText.trim()),
                 vscode.CommentMode.Preview,
                 {
-                    name: "Scribe AI",
+                    name: "Azure Scribe AI",
                     iconPath: vscode.Uri.parse(
                         "https://img.icons8.com/fluency/96/null/chatbot.png"
                     ),
@@ -593,8 +598,6 @@ export async function activate(context: vscode.ExtensionContext) {
         prompt.push(instruction);
         prompt.push(code);
 
-        // If openai is not initialized initialize it with existing API Key
-        // or if doesn't exist then ask user to input API Key.
         if (openai === undefined) {
             await createAzureOpenAIClient();
         }
