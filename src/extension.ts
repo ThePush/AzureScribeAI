@@ -106,24 +106,42 @@ async function createAzureOpenAIClient() {
         await showInputBoxForDeploymentId();
     }
 
-    try {
-        openai = new OpenAIClient(
-            getEndpoint()!,
-            new AzureKeyCredential(getApiKey()!)
+    if (getApiKey() && getEndpoint() && getDeploymentId()) {
+        try {
+            openai = new OpenAIClient(
+                getEndpoint()!,
+                new AzureKeyCredential(getApiKey()!)
+            );
+            await openai.getChatCompletions(getDeploymentId()!, [
+                {
+                    role: "user",
+                    content: "I want to book a flight to Varanasi.",
+                },
+            ]);
+        } catch (err) {
+            vscode.window.showErrorMessage(
+                "Azure Scribe AI: Error: " +
+                    err +
+                    "\n\nPlease check your API Key, Endpoint, and Deployment Name in your settings."
+            );
+            return false;
+        }
+    } else {
+        const missingConfigs = [];
+        if (!getApiKey()) {
+            missingConfigs.push("API Key");
+        }
+        if (!getEndpoint()) {
+            missingConfigs.push("Endpoint");
+        }
+        if (!getDeploymentId()) {
+            missingConfigs.push("Deployment Name");
+        }
+        const formattedMissingConfigs = missingConfigs.join(", ");
+
+        vscode.window.showWarningMessage(
+            `Azure Scribe AI: [Warning] - The following configuration item(s) are not set: ${formattedMissingConfigs}. Please go to extension settings to set them.`
         );
-        await openai.getChatCompletions(getDeploymentId()!, [
-            {
-                role: "user",
-                content: "I want to book a flight to Varanasi.",
-            },
-        ]);
-    } catch (err) {
-        vscode.window.showErrorMessage(
-            "Azure Scribe AI: Error: " +
-                err +
-                "\n\nPlease check your API Key, Endpoint, and Deployment Name in your settings."
-        );
-        return false;
     }
     vscode.window.showInformationMessage(
         "Azure Scribe AI: Successfully connected to Azure OpenAI API."
@@ -475,7 +493,9 @@ export async function activate(context: vscode.ExtensionContext) {
         if (openai === undefined) {
             await createAzureOpenAIClient();
             if (openai === undefined) {
-                vscode.window.showErrorMessage("Azure Scribe AI: OpenAI client creation failed");
+                vscode.window.showErrorMessage(
+                    "Azure Scribe AI: OpenAI client creation failed"
+                );
                 return null;
             }
         }
